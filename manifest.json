@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png",
         "versions": [
             {
+                "version": "10.11.0.3",
+                "changelog": "10.11.0.3 - Fix the resolver crashing when clearing a stale miss-marker (SetProviderId rejects empty values on 10.11); use RemoveProviderId instead.\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.0.3/justwatch_10.11.0.3.zip",
+                "checksum": "0b38ce2ef815cbaa1f9f4cc02c3de3c1",
+                "timestamp": "2026-06-16T07:52:04Z"
+            },
+            {
                 "version": "10.11.0.2",
                 "changelog": "10.11.0.2 - Resolver: richer logging, batched writes, a negative cache for unmatched items (RecheckUnmatchedDays), a weekly default schedule, and a settings page showing coverage with a \"re-resolve now\" action.\n",
                 "targetAbi": "10.11.0.0",
