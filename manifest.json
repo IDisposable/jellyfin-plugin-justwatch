@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png",
         "versions": [
             {
+                "version": "10.11.0.2",
+                "changelog": "10.11.0.2 - Resolver: richer logging, batched writes, a negative cache for unmatched items (RecheckUnmatchedDays), a weekly default schedule, and a settings page showing coverage with a \"re-resolve now\" action.\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.0.2/justwatch_10.11.0.2.zip",
+                "checksum": "09b93bf94d8dc14b7fb50804efc171fa",
+                "timestamp": "2026-06-16T07:37:08Z"
+            },
+            {
                 "version": "10.11.0.1",
                 "changelog": "10.11.0.1 - Resolver task now logs start, progress checkpoints, and per-item debug lines.\n",
                 "targetAbi": "10.11.0.0",
