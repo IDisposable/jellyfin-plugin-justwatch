@@ -24,6 +24,9 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
 {
     private const int MaxItems = 500;
 
+    /// <summary>Emit a progress log line every this many searched items.</summary>
+    private const int CheckpointEvery = 25;
+
     private readonly ILibraryManager _libraryManager;
     private readonly JustWatchGraphQlClient _client;
     private readonly ILogger<ResolveJustWatchLinksTask> _logger;
@@ -76,6 +79,12 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
             IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
             Recursive = true
         });
+
+        _logger.LogInformation(
+            "JustWatch link resolution started: {Count} movies/series to scan, country {Country}, request delay {Delay}ms.",
+            items.Count,
+            config.Country,
+            config.RequestDelayMs);
 
         var processed = 0;
         var stamped = 0;
@@ -133,10 +142,16 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
             item.SetProviderId(JustWatchUtils.ProviderName, fullPath);
             await _libraryManager.UpdateItemAsync(item, item.GetParent(), ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
             stamped++;
+            _logger.LogDebug("JustWatch: stamped {Name} -> {Path}", item.Name, fullPath);
 
             progress.Report(processed * 100.0 / Math.Min(items.Count, MaxItems));
+            if (processed % CheckpointEvery == 0)
+            {
+                _logger.LogInformation("JustWatch progress: searched {Processed}, stamped {Stamped}.", processed, stamped);
+            }
         }
 
+        _logger.LogInformation("JustWatch: deriving season ids from resolved series.");
         var seasonsStamped = await StampSeasonsAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
@@ -190,6 +205,7 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
             season.SetProviderId(JustWatchUtils.ProviderName, seasonId);
             await _libraryManager.UpdateItemAsync(season, season.GetParent(), ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
             stamped++;
+            _logger.LogDebug("JustWatch: stamped season {Name} -> {Path}", season.Name, seasonId);
         }
 
         return stamped;

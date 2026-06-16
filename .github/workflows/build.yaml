@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { abi: "10.11", framework: net9.0, dotnet: "9.0.x", jellyfin: "10.11.11", plugin-version: "10.11.0.0", targetabi: "10.11.0.0" }
+          - { abi: "10.11", framework: net9.0, dotnet: "9.0.x", jellyfin: "10.11.11", plugin-version: "10.11.0.1", targetabi: "10.11.0.0" }
           # Enable 12.x by uncommenting (set jellyfin to the real published version):
           # - { abi: "12.x", framework: net10.0, dotnet: "10.0.x", jellyfin: "12.0.0", plugin-version: "12.0.0.0", targetabi: "12.0.0.0" }
     name: build (${{ matrix.abi }})
