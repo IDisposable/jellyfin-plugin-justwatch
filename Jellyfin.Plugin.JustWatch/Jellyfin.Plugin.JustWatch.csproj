@@ -20,6 +20,11 @@
     <PackageReference Include="Jellyfin.Model" ExcludeAssets="runtime" />
   </ItemGroup>
 
+  <!-- ASP.NET shared framework for the plugin's API controller; provided by the host at runtime. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
   </ItemGroup>

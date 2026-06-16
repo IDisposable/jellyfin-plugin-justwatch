@@ -80,4 +80,36 @@ public class JustWatchUtilsTests
     {
         Assert.Null(JustWatchUtils.BuildSeasonId(seriesId, 1));
     }
+
+    private static readonly System.DateTime _now = new(2026, 6, 16, 12, 0, 0, System.DateTimeKind.Utc);
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-date")]
+    public void ShouldSkipUnmatched_NoOrBadMarker_DoesNotSkip(string? marker)
+    {
+        Assert.False(JustWatchUtils.ShouldSkipUnmatched(marker, 30, _now));
+    }
+
+    [Fact]
+    public void ShouldSkipUnmatched_WithinWindow_Skips()
+    {
+        var tenDaysAgo = _now.AddDays(-10).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.True(JustWatchUtils.ShouldSkipUnmatched(tenDaysAgo, 30, _now));
+    }
+
+    [Fact]
+    public void ShouldSkipUnmatched_PastWindow_DoesNotSkip()
+    {
+        var fortyDaysAgo = _now.AddDays(-40).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.False(JustWatchUtils.ShouldSkipUnmatched(fortyDaysAgo, 30, _now));
+    }
+
+    [Fact]
+    public void ShouldSkipUnmatched_ZeroDays_NeverRechecks()
+    {
+        var longAgo = _now.AddDays(-9999).ToString("O", System.Globalization.CultureInfo.InvariantCulture);
+        Assert.True(JustWatchUtils.ShouldSkipUnmatched(longAgo, 0, _now));
+    }
 }

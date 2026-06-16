@@ -14,6 +14,13 @@ public static class JustWatchUtils
     public const string ProviderName = "JustWatch";
 
     /// <summary>
+    /// <c>ProviderIds</c> key holding the UTC timestamp (round-trip "O" format) of the last resolver
+    /// miss. No <see cref="MediaBrowser.Controller.Providers.IExternalId"/> is registered for it, so it
+    /// stays out of the metadata editor; it's just a negative cache.
+    /// </summary>
+    public const string CheckedProviderName = "JustWatchCheckedUtc";
+
+    /// <summary>
     /// The public JustWatch site base URL (no trailing slash).
     /// </summary>
     public const string BaseUrl = "https://www.justwatch.com";
@@ -69,4 +76,24 @@ public static class JustWatchUtils
     /// <returns>An absolute JustWatch season URL, or <see langword="null"/> if the series id is empty.</returns>
     public static string? BuildSeasonUrl(string? seriesId, int seasonNumber)
         => BuildUrl(BuildSeasonId(seriesId, seasonNumber));
+
+    /// <summary>
+    /// Decides whether an unmatched item is still within its negative-cache window and should be
+    /// skipped this run, based on the stored <see cref="CheckedProviderName"/> marker.
+    /// </summary>
+    /// <param name="checkedUtcMarker">The stored marker (round-trip UTC timestamp), or null/empty.</param>
+    /// <param name="recheckUnmatchedDays">Days before re-checking a miss; 0 or less means never re-check.</param>
+    /// <param name="utcNow">The current UTC time.</param>
+    /// <returns><see langword="true"/> to skip the item (miss still cached); otherwise re-attempt it.</returns>
+    public static bool ShouldSkipUnmatched(string? checkedUtcMarker, int recheckUnmatchedDays, DateTime utcNow)
+    {
+        if (string.IsNullOrEmpty(checkedUtcMarker)
+            || !DateTime.TryParse(checkedUtcMarker, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var lastChecked))
+        {
+            return false;
+        }
+
+        return recheckUnmatchedDays <= 0
+            || utcNow < lastChecked.ToUniversalTime().AddDays(recheckUnmatchedDays);
+    }
 }

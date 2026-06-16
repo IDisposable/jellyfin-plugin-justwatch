@@ -13,5 +13,6 @@ public class PluginConfigurationTests
         Assert.Equal("US", config.Country);
         Assert.Equal("en", config.Language);
         Assert.Equal(300, config.RequestDelayMs);
+        Assert.Equal(30, config.RecheckUnmatchedDays);
     }
 }

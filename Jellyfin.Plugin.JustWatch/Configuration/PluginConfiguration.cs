@@ -16,6 +16,7 @@ public class PluginConfiguration : BasePluginConfiguration
         Language = "en";
         ResolveLinksEnabled = false;
         RequestDelayMs = 300;
+        RecheckUnmatchedDays = 30;
     }
 
     /// <summary>
@@ -40,4 +41,10 @@ public class PluginConfiguration : BasePluginConfiguration
     /// endpoint. Throttles the opt-in task to avoid rate-limiting; clamped to non-negative.
     /// </summary>
     public int RequestDelayMs { get; set; }
+
+    /// <summary>
+    /// Gets or sets how many days to remember an unmatched item before the resolver tries it again.
+    /// Avoids re-querying titles that don't resolve on every run. <c>0</c> means never re-check a miss.
+    /// </summary>
+    public int RecheckUnmatchedDays { get; set; }
 }

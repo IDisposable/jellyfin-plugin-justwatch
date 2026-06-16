@@ -60,6 +60,11 @@ In the dashboard, go to Plugins > JustWatch:
 | `Country` | `US` | Country code (ISO 3166-1 alpha-2) for JustWatch lookups. |
 | `Language` | `en` | Language code (ISO 639-1) for JustWatch lookups. |
 | `RequestDelayMs` | `300` | Delay between resolver lookups, in ms. Throttles the unofficial API. |
+| `RecheckUnmatchedDays` | `30` | Days to skip an unmatched item before retrying it. `0` = never re-check. |
+
+The settings page also shows resolver coverage (matched / unmatched / not-yet-searched) and a
+**Re-resolve now** button that re-queries items the unmatched cache would otherwise skip. The task
+also runs weekly by default (editable under Dashboard > Scheduled Tasks).
 
 You can also set a JustWatch ID by hand in an item's metadata editor without enabling the task.
 

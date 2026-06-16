@@ -43,6 +43,11 @@
                         <input id="RequestDelayMs" name="RequestDelayMs" type="number" min="0" step="50" is="emby-input" />
                         <div class="fieldDescription">Delay between resolver lookups. Higher is gentler on the unofficial endpoint.</div>
                     </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="RecheckUnmatchedDays">Re-check unmatched after (days)</label>
+                        <input id="RecheckUnmatchedDays" name="RecheckUnmatchedDays" type="number" min="0" step="1" is="emby-input" />
+                        <div class="fieldDescription">Skip items that didn't resolve until this many days pass, to avoid re-querying them every run. 0 = never re-check.</div>
+                    </div>
 
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
@@ -50,12 +55,45 @@
                         </button>
                     </div>
                 </form>
+
+                <div class="verticalSection" style="margin-top:2em;">
+                    <h2 class="sectionTitle">Resolver coverage</h2>
+                    <p class="fieldDescription" id="JustWatchCounts">Loading&hellip;</p>
+                    <div>
+                        <button id="JustWatchRefresh" is="emby-button" type="button" class="raised emby-button">
+                            <span>Refresh counts</span>
+                        </button>
+                        <button id="JustWatchRerun" is="emby-button" type="button" class="raised emby-button">
+                            <span>Re-resolve now</span>
+                        </button>
+                    </div>
+                    <div class="fieldDescription">
+                        "Re-resolve now" queues the task and re-queries items the unmatched cache would normally skip
+                        (it doesn't touch items that already have an id). Enable the task above first.
+                    </div>
+                </div>
             </div>
         </div>
 
         <script type="text/javascript">
             (function () {
                 var pluginId = 'f8bb9df9-54fb-48cf-babb-212db1116f48';
+
+                function pick(o, name) {
+                    var lower = name.charAt(0).toLowerCase() + name.slice(1);
+                    return o[name] != null ? o[name] : o[lower];
+                }
+
+                function loadCounts(page) {
+                    var el = page.querySelector('#JustWatchCounts');
+                    el.textContent = 'Loading…';
+                    ApiClient.getJSON(ApiClient.getUrl('Plugins/JustWatch/Counts')).then(function (c) {
+                        el.textContent = 'Matched ' + pick(c, 'Matched') + ' · unmatched ' + pick(c, 'Unmatched')
+                            + ' · not yet searched ' + pick(c, 'Unqueried') + ' · total ' + pick(c, 'Total') + '.';
+                    }, function () {
+                        el.textContent = 'Could not load counts.';
+                    });
+                }
 
                 document.querySelector('#JustWatchConfigPage').addEventListener('pageshow', function () {
                     Dashboard.showLoadingMsg();
@@ -65,7 +103,23 @@
                         page.querySelector('#Country').value = config.Country || '';
                         page.querySelector('#Language').value = config.Language || '';
                         page.querySelector('#RequestDelayMs').value = config.RequestDelayMs;
+                        page.querySelector('#RecheckUnmatchedDays').value = config.RecheckUnmatchedDays;
                         Dashboard.hideLoadingMsg();
+                    });
+                    loadCounts(page);
+                });
+
+                document.querySelector('#JustWatchRefresh').addEventListener('click', function () {
+                    loadCounts(document.querySelector('#JustWatchConfigPage'));
+                });
+
+                document.querySelector('#JustWatchRerun').addEventListener('click', function () {
+                    var page = document.querySelector('#JustWatchConfigPage');
+                    ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('Plugins/JustWatch/Rerun') }).then(function () {
+                        Dashboard.alert('JustWatch re-resolve queued. Watch Dashboard > Scheduled Tasks for progress.');
+                        setTimeout(function () { loadCounts(page); }, 3000);
+                    }, function () {
+                        Dashboard.alert('Could not queue the re-resolve.');
                     });
                 });
 
@@ -78,6 +132,7 @@
                         config.Country = form.querySelector('#Country').value;
                         config.Language = form.querySelector('#Language').value;
                         config.RequestDelayMs = parseInt(form.querySelector('#RequestDelayMs').value, 10) || 0;
+                        config.RecheckUnmatchedDays = parseInt(form.querySelector('#RecheckUnmatchedDays').value, 10) || 0;
                         ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
                             Dashboard.processPluginConfigurationUpdateResult(result);
                         });

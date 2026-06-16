@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
@@ -24,8 +25,11 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
 {
     private const int MaxItems = 500;
 
-    /// <summary>Emit a progress log line every this many searched items.</summary>
-    private const int CheckpointEvery = 25;
+    /// <summary>Flush pending library writes — and emit a progress log line — every this many items.</summary>
+    private const int BatchSize = 25;
+
+    /// <summary>One-shot flag: when set, the next run re-queries items the negative cache would skip.</summary>
+    private static int _forceRun;
 
     private readonly ILibraryManager _libraryManager;
     private readonly JustWatchGraphQlClient _client;
@@ -60,7 +64,22 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
     public string Category => "JustWatch";
 
     /// <inheritdoc />
-    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() => Array.Empty<TaskTriggerInfo>();
+    public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() => new[]
+    {
+        // Runs weekly; no-ops unless ResolveLinksEnabled. Editable in Dashboard > Scheduled Tasks.
+        new TaskTriggerInfo
+        {
+            Type = TaskTriggerInfoType.WeeklyTrigger,
+            DayOfWeek = DayOfWeek.Sunday,
+            TimeOfDayTicks = TimeSpan.FromHours(3).Ticks
+        }
+    };
+
+    /// <summary>
+    /// Requests that the next run re-query items the negative cache would otherwise skip (used by the
+    /// "re-resolve" action). Consumed once, on the next run.
+    /// </summary>
+    public static void RequestForceRun() => Interlocked.Exchange(ref _forceRun, 1);
 
     /// <inheritdoc />
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
@@ -70,6 +89,12 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
         {
             _logger.LogInformation("JustWatch link resolution is disabled; enable it in the plugin settings to run this task.");
             return;
+        }
+
+        var force = Interlocked.Exchange(ref _forceRun, 0) == 1;
+        if (force)
+        {
+            _logger.LogInformation("JustWatch: forced run — re-querying items the unmatched cache would normally skip.");
         }
 
         var requestDelay = TimeSpan.FromMilliseconds(Math.Max(0, config.RequestDelayMs));
@@ -88,9 +113,16 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
 
         var processed = 0;
         var stamped = 0;
+        var skippedCached = 0;
+        var pending = new List<BaseItem>();
         foreach (var item in items)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (pending.Count >= BatchSize)
+            {
+                await SaveBatchAsync(pending, cancellationToken).ConfigureAwait(false);
+            }
+
             if (processed >= MaxItems)
             {
                 _logger.LogInformation("JustWatch: reached item cap ({Cap}); run again to continue", MaxItems);
@@ -99,6 +131,16 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
 
             if (item.TryGetProviderId(JustWatchUtils.ProviderName, out var existing) && !string.IsNullOrEmpty(existing))
             {
+                continue;
+            }
+
+            // Negative cache: skip items that recently missed, until the recheck window elapses
+            // (a forced run bypasses this).
+            if (!force
+                && item.TryGetProviderId(JustWatchUtils.CheckedProviderName, out var checkedMarker)
+                && JustWatchUtils.ShouldSkipUnmatched(checkedMarker, config.RecheckUnmatchedDays, DateTime.UtcNow))
+            {
+                skippedCached++;
                 continue;
             }
 
@@ -136,28 +178,35 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
 
             if (string.IsNullOrEmpty(fullPath))
             {
+                // Record the miss so we don't re-query it every run (see RecheckUnmatchedDays).
+                item.SetProviderId(JustWatchUtils.CheckedProviderName, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+                pending.Add(item);
                 continue;
             }
 
             item.SetProviderId(JustWatchUtils.ProviderName, fullPath);
-            await _libraryManager.UpdateItemAsync(item, item.GetParent(), ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            item.SetProviderId(JustWatchUtils.CheckedProviderName, string.Empty); // clear any prior miss marker
+            pending.Add(item);
             stamped++;
             _logger.LogDebug("JustWatch: stamped {Name} -> {Path}", item.Name, fullPath);
 
             progress.Report(processed * 100.0 / Math.Min(items.Count, MaxItems));
-            if (processed % CheckpointEvery == 0)
+            if (processed % BatchSize == 0)
             {
                 _logger.LogInformation("JustWatch progress: searched {Processed}, stamped {Stamped}.", processed, stamped);
             }
         }
 
+        await SaveBatchAsync(pending, cancellationToken).ConfigureAwait(false);
+
         _logger.LogInformation("JustWatch: deriving season ids from resolved series.");
         var seasonsStamped = await StampSeasonsAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "JustWatch link resolution complete: stamped {Stamped} of {Processed} processed items, plus {Seasons} seasons",
+            "JustWatch link resolution complete: stamped {Stamped} of {Processed} searched items (skipped {Cached} cached misses), plus {Seasons} seasons",
             stamped,
             processed,
+            skippedCached,
             seasonsStamped);
     }
 
@@ -175,9 +224,15 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
         });
 
         var stamped = 0;
+        var pending = new List<BaseItem>();
         foreach (var item in seasons)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (pending.Count >= BatchSize)
+            {
+                await SaveBatchAsync(pending, cancellationToken).ConfigureAwait(false);
+            }
+
             if (item is not Season season
                 || (season.IndexNumber is not { } number) || number < 1)
             {
@@ -203,11 +258,35 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
             }
 
             season.SetProviderId(JustWatchUtils.ProviderName, seasonId);
-            await _libraryManager.UpdateItemAsync(season, season.GetParent(), ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+            pending.Add(season);
             stamped++;
             _logger.LogDebug("JustWatch: stamped season {Name} -> {Path}", season.Name, seasonId);
         }
 
+        await SaveBatchAsync(pending, cancellationToken).ConfigureAwait(false);
         return stamped;
+    }
+
+    /// <summary>
+    /// Persists a batch of modified items in one repository write, grouped by parent (the parent only
+    /// drives child-cache invalidation, so grouping keeps that correct). Clears the batch afterwards.
+    /// </summary>
+    private async Task SaveBatchAsync(List<BaseItem> batch, CancellationToken cancellationToken)
+    {
+        if (batch.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var group in batch.GroupBy(i => i.GetParent()))
+        {
+            await _libraryManager.UpdateItemsAsync(
+                group.ToList(),
+                group.Key,
+                ItemUpdateType.MetadataEdit,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        batch.Clear();
     }
 }
