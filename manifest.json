@@ -6,7 +6,16 @@
         "overview": "JustWatch external IDs and deep-links for your library.",
         "owner": "idisposable",
         "category": "Metadata",
+        "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png",
         "versions": [
+            {
+                "version": "10.11.0.1",
+                "changelog": "10.11.0.1 - Resolver task now logs start, progress checkpoints, and per-item debug lines.\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.0.1/justwatch_10.11.0.1.zip",
+                "checksum": "6bb07af3c580c673f21d6011780b3f8f",
+                "timestamp": "2026-06-16T06:52:50Z"
+            },
             {
                 "version": "10.11.0.0",
                 "changelog": "10.11.0.0 - Initial implementation of external ID + deep-link + resolve task; targets Jellyfin 10.11.\n",
@@ -15,7 +24,6 @@
                 "checksum": "49d2fc5d5adc241ca7907fd0b3e969ef",
                 "timestamp": "2026-06-16T06:38:51Z"
             }
-        ],
-        "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png"
+        ]
     }
 ]
