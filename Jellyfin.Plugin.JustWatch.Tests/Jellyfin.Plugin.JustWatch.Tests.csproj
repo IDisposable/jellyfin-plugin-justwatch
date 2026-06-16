@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Framework-driven, like the plugin: defaults to net9.0; the CI matrix overrides with
+         -p:TargetFramework so the suite runs against each Jellyfin ABI's assemblies. -->
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net9.0</TargetFramework>
+    <!-- Run the test host on whatever shared runtime is installed (e.g. net10 locally). -->
+    <RollForward>Major</RollForward>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jellyfin.Plugin.JustWatch\Jellyfin.Plugin.JustWatch.csproj" />
+    <!-- Copy-local (no ExcludeAssets) so the host entity types resolve at test runtime. -->
+    <PackageReference Include="Jellyfin.Controller" />
+    <PackageReference Include="Jellyfin.Model" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JustWatch</title>
+</head>
+<body>
+    <div id="JustWatchConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+         data-require="emby-input,emby-button,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="JustWatchConfigForm">
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">JustWatch</h2>
+                        <p class="fieldDescription">Adds a JustWatch id and deep-link to your items. The id can be
+                            entered manually per item, or auto-resolved by the opt-in task below.</p>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="ResolveLinksEnabled" name="ResolveLinksEnabled" type="checkbox" is="emby-checkbox" />
+                            <span>Enable the "Resolve JustWatch links" task</span>
+                        </label>
+                        <div class="fieldDescription">
+                            Lets the scheduled task query JustWatch's <strong>unofficial</strong> GraphQL API to fill in
+                            the JustWatch id for items that lack one. Off by default; the endpoint is undocumented and may
+                            change without notice.
+                        </div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="Country">Country code</label>
+                        <input id="Country" name="Country" type="text" is="emby-input" />
+                        <div class="fieldDescription">ISO 3166-1 alpha-2, e.g. US, GB, DE.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="Language">Language</label>
+                        <input id="Language" name="Language" type="text" is="emby-input" />
+                        <div class="fieldDescription">ISO 639-1, e.g. en, de.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="RequestDelayMs">Request delay (ms)</label>
+                        <input id="RequestDelayMs" name="RequestDelayMs" type="number" min="0" step="50" is="emby-input" />
+                        <div class="fieldDescription">Delay between resolver lookups. Higher is gentler on the unofficial endpoint.</div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            (function () {
+                var pluginId = 'f8bb9df9-54fb-48cf-babb-212db1116f48';
+
+                document.querySelector('#JustWatchConfigPage').addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    var page = this;
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        page.querySelector('#ResolveLinksEnabled').checked = config.ResolveLinksEnabled;
+                        page.querySelector('#Country').value = config.Country || '';
+                        page.querySelector('#Language').value = config.Language || '';
+                        page.querySelector('#RequestDelayMs').value = config.RequestDelayMs;
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+                document.querySelector('#JustWatchConfigForm').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    var form = this;
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.ResolveLinksEnabled = form.querySelector('#ResolveLinksEnabled').checked;
+                        config.Country = form.querySelector('#Country').value;
+                        config.Language = form.querySelector('#Language').value;
+                        config.RequestDelayMs = parseInt(form.querySelector('#RequestDelayMs').value, 10) || 0;
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+                    return false;
+                });
+            })();
+        </script>
+    </div>
+</body>
+</html>

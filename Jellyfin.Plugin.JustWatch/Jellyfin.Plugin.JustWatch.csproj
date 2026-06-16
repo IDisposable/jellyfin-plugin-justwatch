@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Defaults to net9.0 (Jellyfin 10.11). Build another ABI by overriding the framework, e.g.
+       `dotnet build -p:TargetFramework=net10.0` (the CI matrix does this). The matching package and
+       assembly versions are selected per-TFM in Directory.Packages.props / Directory.Build.props. -->
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net9.0</TargetFramework>
+    <RootNamespace>Jellyfin.Plugin.JustWatch</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Compile against the published Jellyfin 10.11 server ABI. ExcludeAssets="runtime" keeps these
+       compile-only — the host provides them at runtime, so they are never shipped. -->
+  <ItemGroup>
+    <PackageReference Include="Jellyfin.Controller" ExcludeAssets="runtime" />
+    <PackageReference Include="Jellyfin.Model" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Jellyfin.Plugin.JustWatch.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Configuration\configPage.html" />
+    <EmbeddedResource Include="Configuration\configPage.html" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- Same knob as the plugin: CI matrix overrides per ABI; defaults to current 10.11. -->
+    <JellyfinVersion Condition="'$(JellyfinVersion)' == ''">10.11.11</JellyfinVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageVersion Include="Jellyfin.Controller" Version="$(JellyfinVersion)" />
+    <PackageVersion Include="Jellyfin.Model" Version="$(JellyfinVersion)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>

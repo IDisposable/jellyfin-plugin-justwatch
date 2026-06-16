@@ -1,0 +1,17 @@
+---
+name: "JustWatch"
+guid: "f8bb9df9-54fb-48cf-babb-212db1116f48"
+version: "10.11.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+overview: "JustWatch external IDs and deep-links for your library."
+imageUrl: "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png"
+description: >
+  Adds a JustWatch external ID and a clickable JustWatch deep-link to movies, series, seasons, and
+  episodes.
+category: "Metadata"
+owner: "idisposable"
+artifacts:
+- "Jellyfin.Plugin.JustWatch.dll"
+changelog: >
+  10.11.0.0 - Initial implementation of external ID + deep-link + resolve task; targets Jellyfin 10.11.

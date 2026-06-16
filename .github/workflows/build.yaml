@@ -1,0 +1,105 @@
+# Build/test on every push & PR; on a published Release, also package and publish to the catalog.
+# One matrix row per Jellyfin ABI — add more rows when new Jellyfin NuGet versions are shipped.
+name: build
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ '**/*.md' ]
+  pull_request:
+    branches: [ main ]
+    paths-ignore: [ '**/*.md' ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { abi: "10.11", framework: net9.0, dotnet: "9.0.x", jellyfin: "10.11.11", plugin-version: "10.11.0.0", targetabi: "10.11.0.0" }
+          # Enable 12.x by uncommenting (set jellyfin to the real published version):
+          # - { abi: "12.x", framework: net10.0, dotnet: "10.0.x", jellyfin: "12.0.0", plugin-version: "12.0.0.0", targetabi: "12.0.0.0" }
+    name: build (${{ matrix.abi }})
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+
+      - name: Build
+        run: >
+          dotnet build Jellyfin.Plugin.JustWatch/Jellyfin.Plugin.JustWatch.csproj
+          -c Release -p:TargetFramework=${{ matrix.framework }}
+          -p:JellyfinVersion=${{ matrix.jellyfin }} -p:Version=${{ matrix['plugin-version'] }}
+
+      - name: Test
+        run: >
+          dotnet test Jellyfin.Plugin.JustWatch.sln -c Release -p:TargetFramework=${{ matrix.framework }}
+          -p:JellyfinVersion=${{ matrix.jellyfin }} -p:Version=${{ matrix['plugin-version'] }}
+
+      - name: Package
+        if: github.event_name == 'release'
+        env:
+          # Feed the per-ABI versions to the build jprm runs (MSBuild reads env vars as properties).
+          JellyfinVersion: ${{ matrix.jellyfin }}
+          Version: ${{ matrix['plugin-version'] }}
+        run: |
+          pipx install jprm
+          # build.yaml is the plugin manifest jprm reads; set its per-ABI fields from the matrix row.
+          sed -i \
+            -e "s|^version:.*|version: \"${{ matrix['plugin-version'] }}\"|" \
+            -e "s|^targetAbi:.*|targetAbi: \"${{ matrix.targetabi }}\"|" \
+            -e "s|^framework:.*|framework: \"${{ matrix.framework }}\"|" \
+            build.yaml
+          mkdir -p ./artifacts
+          jprm plugin build "." --output=./artifacts
+
+      - name: Upload package
+        if: github.event_name == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pkg-${{ matrix.abi }}
+          path: artifacts/*.zip
+
+  # Fan-in: one job attaches every ABI's zip and writes a single manifest commit (avoids push races).
+  publish:
+    needs: build
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Attach zips and update manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pipx install jprm
+          for zip in artifacts/*.zip; do
+            url="https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/$(basename "$zip")"
+            gh release upload "${{ github.event.release.tag_name }}" "$zip" --clobber
+            jprm repo add --plugin-url "$url" ./manifest.json "$zip"
+          done
+
+      - name: Commit manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git diff --cached --quiet || git commit -m "Publish manifest for ${{ github.event.release.tag_name }}"
+          git push
