@@ -1,1 +1,21 @@
-[]
+[
+    {
+        "guid": "f8bb9df9-54fb-48cf-babb-212db1116f48",
+        "name": "JustWatch",
+        "description": "Adds a JustWatch external ID and a clickable JustWatch deep-link to movies, series, seasons, and episodes.\n",
+        "overview": "JustWatch external IDs and deep-links for your library.",
+        "owner": "idisposable",
+        "category": "Metadata",
+        "versions": [
+            {
+                "version": "10.11.0.0",
+                "changelog": "10.11.0.0 - Initial implementation of external ID + deep-link + resolve task; targets Jellyfin 10.11.\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.0.0/justwatch_10.11.0.0.zip",
+                "checksum": "49d2fc5d5adc241ca7907fd0b3e969ef",
+                "timestamp": "2026-06-16T06:38:51Z"
+            }
+        ],
+        "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png"
+    }
+]
