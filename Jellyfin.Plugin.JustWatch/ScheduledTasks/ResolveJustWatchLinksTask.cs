@@ -185,7 +185,7 @@ public sealed class ResolveJustWatchLinksTask : IScheduledTask
             }
 
             item.SetProviderId(JustWatchUtils.ProviderName, fullPath);
-            item.SetProviderId(JustWatchUtils.CheckedProviderName, string.Empty); // clear any prior miss marker
+            item.RemoveProviderId(JustWatchUtils.CheckedProviderName); // clear any prior miss marker
             pending.Add(item);
             stamped++;
             _logger.LogDebug("JustWatch: stamped {Name} -> {Path}", item.Name, fullPath);

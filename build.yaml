@@ -1,7 +1,7 @@
 ---
 name: "JustWatch"
 guid: "f8bb9df9-54fb-48cf-babb-212db1116f48"
-version: "10.11.0.2"
+version: "10.11.0.3"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "JustWatch external IDs and deep-links for your library."
@@ -14,6 +14,5 @@ owner: "idisposable"
 artifacts:
 - "Jellyfin.Plugin.JustWatch.dll"
 changelog: >
-  10.11.0.2 - Resolver: richer logging, batched writes, a negative cache for unmatched items
-  (RecheckUnmatchedDays), a weekly default schedule, and a settings page showing coverage with a
-  "re-resolve now" action.
+  10.11.0.3 - Fix the resolver crashing when clearing a stale miss-marker (SetProviderId rejects
+  empty values on 10.11); use RemoveProviderId instead.

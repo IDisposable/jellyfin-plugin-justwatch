@@ -23,11 +23,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # The 10.11 row's version comes from build.yaml (the single source). Other ABI rows set an
-          # explicit plugin-version; keep its trailing fields in lockstep with build.yaml (e.g. 12.0.0.3).
+          # Version comes from build.yaml (the single source). A row with no plugin-version uses it
+          # verbatim; a row with abi-base derives <abi-base>.<build.yaml trailing fields> so other ABIs
+          # auto-stay in lockstep (build.yaml 10.11.0.3 -> 12.0.0.3). An explicit plugin-version overrides.
           - { abi: "10.11", framework: net9.0, dotnet: "9.0.x", jellyfin: "10.11.11", targetabi: "10.11.0.0" }
           # Enable 12.x by uncommenting (set jellyfin to the real published version):
-          # - { abi: "12.x", framework: net10.0, dotnet: "10.0.x", jellyfin: "12.0.0", plugin-version: "12.0.0.2", targetabi: "12.0.0.0" }
+          # - { abi: "12.x", framework: net10.0, dotnet: "10.0.x", jellyfin: "12.0.0", abi-base: "12.0", targetabi: "12.0.0.0" }
     name: build (${{ matrix.abi }})
     steps:
       - uses: actions/checkout@v6
@@ -37,12 +38,18 @@ jobs:
         with:
           dotnet-version: ${{ matrix.dotnet }}
 
-      # Version = the row's explicit plugin-version, else build.yaml's version (the single source).
+      # Version source of truth is build.yaml. A row may override with plugin-version, or set abi-base
+      # to derive <abi-base>.<build.yaml trailing fields> (keeps non-10.11 ABIs in lockstep). Default:
+      # build.yaml verbatim.
       - name: Resolve version
         id: ver
         run: |
+          base_ver=$(grep -m1 '^version:' build.yaml | cut -d'"' -f2)
           v="${{ matrix['plugin-version'] }}"
-          if [ -z "$v" ]; then v=$(grep -m1 '^version:' build.yaml | cut -d'"' -f2); fi
+          if [ -z "$v" ]; then
+            abi="${{ matrix['abi-base'] }}"
+            if [ -z "$abi" ]; then v="$base_ver"; else v="$abi.$(echo "$base_ver" | cut -d. -f3-)"; fi
+          fi
           echo "value=$v" >> "$GITHUB_OUTPUT"
 
       - name: Build
