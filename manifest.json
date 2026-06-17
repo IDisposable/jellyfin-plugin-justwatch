@@ -9,6 +9,14 @@
         "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png",
         "versions": [
             {
+                "version": "10.11.0.4",
+                "changelog": "10.11.0.4 - Build/packaging only; no functional changes. Centralized NuGet versions into one Directory.Packages.props and single-sourced the plugin version from build.yaml.\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.0.4/justwatch_10.11.0.4.zip",
+                "checksum": "ea8c9c191f40fea35e409a86509918bb",
+                "timestamp": "2026-06-17T22:28:04Z"
+            },
+            {
                 "version": "10.11.0.3",
                 "changelog": "10.11.0.3 - Fix the resolver crashing when clearing a stale miss-marker (SetProviderId rejects empty values on 10.11); use RemoveProviderId instead.\n",
                 "targetAbi": "10.11.0.0",
