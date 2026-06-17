@@ -1,8 +1,9 @@
 <Project>
-  <!-- Self-contained; halts inheritance of the server repo's root props. -->
-  <!-- The version's single source is build.yaml; CI passes it as -p:Version (see the workflow).
-       Local builds get the SDK default version, which doesn't matter — the shipped version comes from
-       build.yaml / meta.json. Mirror Version into AssemblyVersion/FileVersion when it's supplied. -->
+  <!-- The version's single source is build.yaml. A local build reads it here so it stamps the same
+       version a release does; CI passes -p:Version explicitly, so this read is a fallback only. -->
+  <PropertyGroup Condition="'$(Version)' == ''">
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../build.yaml')), 'version:\s*"([^"]+)"').Groups.get_Item(1).Value)</Version>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Version)' != ''">
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>

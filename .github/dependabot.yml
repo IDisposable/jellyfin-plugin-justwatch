@@ -11,9 +11,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: nuget
-    directories:
-      - "/Jellyfin.Plugin.JustWatch"
-      - "/Jellyfin.Plugin.JustWatch.Tests"
+    directory: "/"
     schedule:
       interval: weekly
     groups:

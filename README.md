@@ -104,15 +104,17 @@ The `release` workflow packages the plugin, attaches the `.zip` to the release, 
 
 ```
 Jellyfin.Plugin.JustWatch.sln
-build.yaml                          # plugin manifest
+build.yaml                          # plugin manifest + single version source
+manifest.json                       # catalog/repository manifest
+Directory.Packages.props            # central NuGet versions
 LICENSE
 Jellyfin.Plugin.JustWatch/          # the plugin
   Plugin.cs, ServiceRegistrator.cs
   JustWatch*ExternalId.cs, JustWatchExternalUrlProvider.cs, JustWatchUtils.cs
   Graphql/JustWatchGraphQlClient.cs
   ScheduledTasks/ResolveJustWatchLinksTask.cs
+  Api/JustWatchController.cs
   Configuration/PluginConfiguration.cs, configPage.html
-  jellyfin.ruleset
 Jellyfin.Plugin.JustWatch.Tests/    # xUnit tests
 ```
 
