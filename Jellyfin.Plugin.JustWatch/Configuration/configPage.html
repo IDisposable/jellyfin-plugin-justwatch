@@ -66,11 +66,17 @@
                         <button id="JustWatchRerun" is="emby-button" type="button" class="raised emby-button">
                             <span>Re-resolve now</span>
                         </button>
+                        <button id="JustWatchListUnmatched" is="emby-button" type="button" class="raised emby-button">
+                            <span>List unmatched</span>
+                        </button>
                     </div>
                     <div class="fieldDescription">
                         "Re-resolve now" queues the task and re-queries items the unmatched cache would normally skip
                         (it doesn't touch items that already have an id). Enable the task above first.
+                        "List unmatched" shows the items the resolver searched but couldn't match — click one to open it
+                        and set its JustWatch id by hand.
                     </div>
+                    <div id="JustWatchUnmatched" style="margin-top:1em;"></div>
                 </div>
             </div>
         </div>
@@ -109,8 +115,58 @@
                     loadCounts(page);
                 });
 
+                function loadUnmatched(page) {
+                    var box = page.querySelector('#JustWatchUnmatched');
+                    box.textContent = 'Loading…';
+                    ApiClient.getJSON(ApiClient.getUrl('Plugins/JustWatch/Unmatched')).then(function (list) {
+                        if (!list || !list.length) {
+                            box.textContent = 'No unmatched items.';
+                            return;
+                        }
+
+                        var serverId = ApiClient.serverId();
+                        var ul = document.createElement('ul');
+                        ul.style.paddingLeft = '1.2em';
+                        list.forEach(function (item) {
+                            var name = pick(item, 'Name') || '(untitled)';
+                            var year = pick(item, 'ProductionYear');
+                            var type = pick(item, 'Type');
+                            var checkedUtc = pick(item, 'CheckedUtc');
+
+                            var li = document.createElement('li');
+                            var a = document.createElement('a');
+                            a.href = '#/details?id=' + pick(item, 'ItemId') + '&serverId=' + serverId;
+                            a.target = '_blank';
+                            a.rel = 'noopener';
+                            a.textContent = year ? name + ' (' + year + ')' : name;
+                            li.appendChild(a);
+
+                            var meta = type ? ' — ' + type : '';
+                            if (checkedUtc) {
+                                meta += ' · last tried ' + checkedUtc.slice(0, 10);
+                            }
+
+                            li.appendChild(document.createTextNode(meta));
+                            ul.appendChild(li);
+                        });
+
+                        box.textContent = '';
+                        var header = document.createElement('div');
+                        header.className = 'fieldDescription';
+                        header.textContent = list.length + ' unmatched item' + (list.length === 1 ? '' : 's') + ':';
+                        box.appendChild(header);
+                        box.appendChild(ul);
+                    }, function () {
+                        box.textContent = 'Could not load the unmatched list.';
+                    });
+                }
+
                 document.querySelector('#JustWatchRefresh').addEventListener('click', function () {
                     loadCounts(document.querySelector('#JustWatchConfigPage'));
+                });
+
+                document.querySelector('#JustWatchListUnmatched').addEventListener('click', function () {
+                    loadUnmatched(document.querySelector('#JustWatchConfigPage'));
                 });
 
                 document.querySelector('#JustWatchRerun').addEventListener('click', function () {

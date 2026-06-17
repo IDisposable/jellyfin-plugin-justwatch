@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.JustWatch.ScheduledTasks;
 using MediaBrowser.Controller.Entities;
@@ -62,6 +65,48 @@ public class JustWatchController : ControllerBase
         }
 
         return counts;
+    }
+
+    /// <summary>
+    /// Lists the movies/series the resolver searched but couldn't match (negative-cached), so they can
+    /// be matched by hand. Ordered by name.
+    /// </summary>
+    /// <returns>The unmatched items.</returns>
+    [HttpGet("Unmatched")]
+    public ActionResult<IReadOnlyList<JustWatchUnmatchedItem>> GetUnmatched()
+    {
+        var items = _libraryManager.GetItemList(new InternalItemsQuery
+        {
+            IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Series },
+            Recursive = true
+        });
+
+        var unmatched = new List<JustWatchUnmatchedItem>();
+        foreach (var item in items)
+        {
+            if (item.TryGetProviderId(JustWatchUtils.ProviderName, out var id) && !string.IsNullOrEmpty(id))
+            {
+                continue;
+            }
+
+            if (!item.TryGetProviderId(JustWatchUtils.CheckedProviderName, out var marker) || string.IsNullOrEmpty(marker))
+            {
+                continue;
+            }
+
+            unmatched.Add(new JustWatchUnmatchedItem
+            {
+                ItemId = item.Id,
+                Name = item.Name,
+                ProductionYear = item.ProductionYear,
+                Type = item.GetBaseItemKind().ToString(),
+                CheckedUtc = marker
+            });
+        }
+
+        return unmatched
+            .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     /// <summary>

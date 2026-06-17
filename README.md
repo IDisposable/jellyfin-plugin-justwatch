@@ -62,9 +62,11 @@ In the dashboard, go to Plugins > JustWatch:
 | `RequestDelayMs` | `300` | Delay between resolver lookups, in ms. Throttles the unofficial API. |
 | `RecheckUnmatchedDays` | `30` | Days to skip an unmatched item before retrying it. `0` = never re-check. |
 
-The settings page also shows resolver coverage (matched / unmatched / not-yet-searched) and a
-**Re-resolve now** button that re-queries items the unmatched cache would otherwise skip. The task
-also runs weekly by default (editable under Dashboard > Scheduled Tasks).
+The settings page also shows resolver coverage (matched / unmatched / not-yet-searched), a
+**Re-resolve now** button that re-queries items the unmatched cache would otherwise skip, and a
+**List unmatched** button that lists the items the resolver couldn't match (each links to the item so
+you can set its JustWatch id by hand). The task also runs weekly by default (editable under
+Dashboard > Scheduled Tasks).
 
 You can also set a JustWatch ID by hand in an item's metadata editor without enabling the task.
 
