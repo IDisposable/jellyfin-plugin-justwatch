@@ -13,6 +13,7 @@ with an optional task to resolve those links automatically.
 <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/IDisposable/jellyfin-plugin-justwatch/build.yaml?branch=main">
 <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 <img alt="Jellyfin 10.11" src="https://img.shields.io/badge/Jellyfin-10.11-blueviolet">
+<img alt="Jellyfin 12.x" src="https://img.shields.io/badge/Jellyfin-12.0-blueviolet">
 </p>
 
 ## Features
