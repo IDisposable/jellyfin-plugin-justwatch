@@ -1,0 +1,12 @@
+<Project>
+  <!-- JellyfinVersion is the single driver for both NuGet packages and TargetFramework.
+       Passing -p:JellyfinVersion to any dotnet command selects both the right packages and TFM.
+       CLI -p:TargetFramework still overrides if set explicitly. -->
+  <PropertyGroup>
+    <JellyfinVersion Condition="'$(JellyfinVersion)' == ''">10.11.11</JellyfinVersion>
+    <_JellyfinMajor>$([System.Text.RegularExpressions.Regex]::Match($(JellyfinVersion), '^\d+').Value)</_JellyfinMajor>
+    <!-- Add a row here for each new Jellyfin major line. -->
+    <TargetFramework Condition="'$(TargetFramework)' == '' AND '$(_JellyfinMajor)' == '12'">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net9.0</TargetFramework>
+  </PropertyGroup>
+</Project>

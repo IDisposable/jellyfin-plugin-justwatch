@@ -73,7 +73,7 @@ jobs:
 
       - name: Test
         run: >
-          dotnet test Jellyfin.Plugin.JustWatch.sln -c Release -p:TargetFramework=${{ matrix.framework }}
+          dotnet test Jellyfin.Plugin.JustWatch.sln -c Release
           -p:JellyfinVersion=${{ matrix.jellyfin }} -p:Version=${{ steps.ver.outputs.value }}
 
       - name: Package

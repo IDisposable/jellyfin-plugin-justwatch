@@ -1,5 +1,7 @@
 <Project>
-  <!-- Self-contained; halts inheritance of the server repo's root props (no warnings-as-errors for tests). -->
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" Condition="Exists('$(MSBuildThisFileDirectory)../Directory.Build.props')" />
+
+  <!-- Halts inheritance of any outer repo's root props (no warnings-as-errors for tests). -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
   </PropertyGroup>

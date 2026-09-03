@@ -1,4 +1,6 @@
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)../Directory.Build.props" Condition="Exists('$(MSBuildThisFileDirectory)../Directory.Build.props')" />
+
   <!-- The version's single source is build.yaml. A local build reads it here so it stamps the same
        version a release does; CI passes -p:Version explicitly, so this read is a fallback only. -->
   <PropertyGroup Condition="'$(Version)' == ''">
