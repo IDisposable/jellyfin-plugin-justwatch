@@ -9,6 +9,22 @@
         "imageUrl": "https://raw.githubusercontent.com/IDisposable/jellyfin-plugin-justwatch/main/assets/social.png",
         "versions": [
             {
+                "version": "12.0.1.0",
+                "changelog": "10.11.1.0 - Build for Jellyfin ABI 12.x\n",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.1.0/justwatch_12.0.1.0.zip",
+                "checksum": "44b545037e93b13d6503b386e648be9e",
+                "timestamp": "2026-09-03T07:43:12Z"
+            },
+            {
+                "version": "10.11.1.0",
+                "changelog": "10.11.1.0 - Build for Jellyfin ABI 12.x\n",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/IDisposable/jellyfin-plugin-justwatch/releases/download/v10.11.1.0/justwatch_10.11.1.0.zip",
+                "checksum": "c528648a4a64fb58c7096b74270b7576",
+                "timestamp": "2026-09-03T07:43:16Z"
+            },
+            {
                 "version": "10.11.0.5",
                 "changelog": "10.11.0.5 - Add a \"List unmatched\" button to the settings page that lists the movies/series the resolver couldn't match, each linking to the item so you can set its JustWatch id by hand.\n",
                 "targetAbi": "10.11.0.0",
